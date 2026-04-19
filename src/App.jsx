@@ -35,19 +35,13 @@ function App() {
     fetchData();
   }, []);
 
-    useEffect(() => {
-  if (latestUsage > 0 && data.length > 0) {
-    const lastBalance = data[data.length - 1].balance;
-
-    if (lastBalance < 200) {
-      alert("⚠️ Low balance! Recharge soon");
-    }
-  }
-}, [data]);
+    
 
     useEffect(() => {
       const setupNotification = async () => {
         await LocalNotifications.requestPermissions();
+
+        await LocalNotifications.cancel({ notifications: [{ id: 1 }] });
 
         await LocalNotifications.schedule({
           notifications: [
@@ -129,6 +123,18 @@ function App() {
       ? getUsage(filteredData, filteredData.length - 1)
       : 0;
 
+
+  useEffect(() => {
+    if ( data.length > 0) {
+      const lastBalance = data[data.length - 1].balance;
+
+    if (lastBalance < 200) {
+      alert("⚠️ Low balance! Recharge soon");
+    }
+  }
+}, [data , latestUsage]);
+
+
   // Chart data
   const chartData = filteredData.map((item, index) => ({
     date: item.date,
@@ -147,6 +153,38 @@ function App() {
     newDate.setMonth(newDate.getMonth() + dir);
     setSelectedMonth(newDate);
   };
+
+  const usages = filteredData
+    .map((item, index) => {
+      if (index === 0) return null;
+      return filteredData[index - 1].balance - item.balance;
+    })
+    .filter(Boolean);
+
+  const avgUsage =
+    usages.length > 0  
+      ? usages.reduce((a, b) => a + b, 0) / usages.length
+      : 0;
+
+  const currentBalance =
+    filteredData.length > 0
+      ? filteredData[filteredData.length - 1].balance
+      : 0;
+
+  const rechargeOptions = [500, 1000, 2000];
+
+  const rechargeSuggestions = rechargeOptions.map((amount) => {
+    const days =
+      avgUsage > 0 ? Math.floor(amount / avgUsage) : 0;
+
+    return {
+      amount,
+      days,
+    };
+  });
+  const daysLeft =
+    avgUsage > 0 ? Math.floor(currentBalance / avgUsage) : 0;
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center">
@@ -179,6 +217,33 @@ function App() {
             ₹{latestUsage}
           </div>
         </div>
+        
+        {/*days left card */ }
+        <div className="bg-blue-50 p-4 rounded-xl text-center mb-4">
+          <p className="text-sm text-gray-500">Estimated Days Left</p>
+          <p className="text-2xl font-bold text-blue-600">
+            {daysLeft} days
+          </p>
+        </div>
+
+        {/*Recharge Suggestion card */ }
+        <div className="bg-green-50 p-4 rounded-xl mb-4">
+          <p className="text-sm text-gray-500 mb-2">
+            Recharge Suggestions
+          </p>
+
+          {rechargeSuggestions.map((item, index) => (
+            <div
+              key={index}
+              className="flex justify-between text-sm py-1"
+            >
+              <span>₹{item.amount}</span>
+              <span className="font-medium text-green-700">
+                {item.days} days
+              </span>
+            </div>
+          ))}
+        </div>        
 
         {/* Input */}
         <div className="flex gap-2 mb-4">
