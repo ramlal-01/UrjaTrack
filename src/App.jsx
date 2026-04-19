@@ -17,6 +17,7 @@ import MonthSelector from "./components/MonthSelector";
 import DaysLeftCard from "./components/DaysLeftCard";
 import RechargeCard from "./components/RechargeCard";
 import MonthlySummaryCard from "./components/MonthlySummaryCard";
+import TrendCard from "./components/TrendCard";
 
 import { getUsage, calculateStats } from "./utils/calculations";
 
@@ -107,8 +108,14 @@ function App() {
   });
 
   // 🔹 Stats (clean logic from utils)
-  const { daysLeft, rechargeSuggestions ,avgUsage,totalSpent,maxUsage,} =
-    calculateStats(filteredData);
+  const {
+        daysLeft,
+        rechargeSuggestions ,
+        avgUsage,
+        totalSpent,
+        maxUsage,
+        trend,
+      } = calculateStats(filteredData);
 
   // 🔹 Latest usage
   const latestUsage =
@@ -198,6 +205,9 @@ function App() {
           avgUsage={avgUsage}
           maxUsage={maxUsage}
         />
+
+        <TrendCard trend={trend} />
+
         {/* Input */}
         <div className="flex gap-2 mb-4 items-center">
           <input

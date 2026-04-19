@@ -42,6 +42,20 @@ export const calculateStats = (filteredData) => {
     days: avgUsage > 0 ? Math.floor(amount / avgUsage) : 0,
   }));
   
+  const recentUsages = usages.slice(-4);
+
+  const recentAvg =
+    recentUsages.length > 0
+      ? recentUsages.reduce((a, b) => a + b, 0) / recentUsages.length
+      : 0;
+
+  let trend = "stable";
+
+  if (recentAvg > avgUsage + 2) {
+    trend = "up";
+  } else if (recentAvg < avgUsage - 2) {
+    trend = "down";
+  }
 
   return {
     avgUsage,
@@ -50,5 +64,6 @@ export const calculateStats = (filteredData) => {
     currentBalance,
     daysLeft,
     rechargeSuggestions,
+    trend
   };
 };
