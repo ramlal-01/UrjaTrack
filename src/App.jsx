@@ -16,6 +16,7 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import MonthSelector from "./components/MonthSelector";
 import DaysLeftCard from "./components/DaysLeftCard";
 import RechargeCard from "./components/RechargeCard";
+import MonthlySummaryCard from "./components/MonthlySummaryCard";
 
 import { getUsage, calculateStats } from "./utils/calculations";
 
@@ -106,7 +107,7 @@ function App() {
   });
 
   // 🔹 Stats (clean logic from utils)
-  const { daysLeft, rechargeSuggestions } =
+  const { daysLeft, rechargeSuggestions ,avgUsage,totalSpent,maxUsage,} =
     calculateStats(filteredData);
 
   // 🔹 Latest usage
@@ -192,7 +193,11 @@ function App() {
           <RechargeCard rechargeSuggestions={rechargeSuggestions} />
         </div>
         
-
+        <MonthlySummaryCard
+          totalSpent={totalSpent}
+          avgUsage={avgUsage}
+          maxUsage={maxUsage}
+        />
         {/* Input */}
         <div className="flex gap-2 mb-4 items-center">
           <input

@@ -17,7 +17,16 @@ export const calculateStats = (filteredData) => {
     usages.length > 0
       ? usages.reduce((a, b) => a + b, 0) / usages.length
       : 0;
+      
+  const totalSpent =
+      usages.length > 0
+        ? usages.reduce((a, b) => a + b, 0)
+        : 0;
 
+  const maxUsage =
+    usages.length > 0
+      ? Math.max(...usages)
+      : 0;
   const currentBalance =
     filteredData.length > 0
       ? filteredData[filteredData.length - 1].balance
@@ -32,9 +41,12 @@ export const calculateStats = (filteredData) => {
     amount,
     days: avgUsage > 0 ? Math.floor(amount / avgUsage) : 0,
   }));
+  
 
   return {
     avgUsage,
+    totalSpent,
+    maxUsage,
     currentBalance,
     daysLeft,
     rechargeSuggestions,
