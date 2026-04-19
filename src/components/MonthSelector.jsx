@@ -1,16 +1,41 @@
 export default function MonthSelector({ selectedMonth, changeMonth }) {
   return (
-    <div className="flex justify-between items-center mb-4">
-      <button onClick={() => changeMonth(-1)}>⬅️</button>
+    <div className="flex items-center justify-between mb-4">
 
-      <div className="font-semibold">
+      {/* Left button */}
+      <button
+        onClick={() => changeMonth(-1)}
+        className="w-8 h-8 flex items-center justify-center 
+        rounded-lg bg-white dark:bg-[#1f2937] 
+        border border-gray-200 dark:border-gray-600/40 
+        shadow-sm hover:scale-105 transition"
+      >
+        <span className="text-gray-700 dark:text-gray-300 text-sm">
+          ←
+        </span>
+      </button>
+
+      {/* Month text */}
+      <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
         {selectedMonth.toLocaleString("default", {
           month: "long",
           year: "numeric",
         })}
       </div>
 
-      <button onClick={() => changeMonth(1)}>➡️</button>
+      {/* Right button */}
+      <button
+        onClick={() => changeMonth(1)}
+        className="w-8 h-8 flex items-center justify-center 
+        rounded-lg bg-white dark:bg-[#1f2937] 
+        border border-gray-200 dark:border-gray-600/40 
+        shadow-sm hover:scale-105 transition"
+      >
+        <span className="text-gray-700 dark:text-gray-300 text-sm">
+          →
+        </span>
+      </button>
+
     </div>
   );
 }

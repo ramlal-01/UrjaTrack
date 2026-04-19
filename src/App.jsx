@@ -6,6 +6,7 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  ResponsiveContainer,
 } from "recharts";
 
 import { db } from "./firebase";
@@ -14,7 +15,6 @@ import { collection, addDoc, getDocs } from "firebase/firestore";
 import { LocalNotifications } from "@capacitor/local-notifications";
 
 import MonthSelector from "./components/MonthSelector";
-import DaysLeftCard from "./components/DaysLeftCard";
 import RechargeCard from "./components/RechargeCard";
 import MonthlySummaryCard from "./components/MonthlySummaryCard";
 import TrendCard from "./components/TrendCard";
@@ -25,6 +25,16 @@ function App() {
   const [balance, setBalance] = useState("");
   const [data, setData] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+
+  // ✅ Load dark mode from localStorage
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
+
+  // ✅ Save dark mode to localStorage
+  useEffect(() => {
+    localStorage.setItem("darkMode", darkMode);
+  }, [darkMode]);
 
   // 🔹 Load data
   useEffect(() => {
@@ -98,7 +108,7 @@ function App() {
     setBalance("");
   };
 
-  // 🔹 Month filter
+  // 🔹 Filter month
   const filteredData = data.filter((item) => {
     const d = new Date(item.date);
     return (
@@ -107,17 +117,18 @@ function App() {
     );
   });
 
-  // 🔹 Stats (clean logic from utils)
-  const {
-        daysLeft,
-        rechargeSuggestions ,
-        avgUsage,
-        totalSpent,
-        maxUsage,
-        trend,
-      } = calculateStats(filteredData);
+  const reversedData = [...filteredData].reverse();
 
-  // 🔹 Latest usage
+  // 🔹 Stats
+  const {
+    daysLeft,
+    rechargeSuggestions,
+    avgUsage,
+    totalSpent,
+    maxUsage,
+    trend,
+  } = calculateStats(filteredData);
+
   const latestUsage =
     filteredData.length > 1
       ? getUsage(filteredData, filteredData.length - 1)
@@ -134,13 +145,13 @@ function App() {
     }
   }, [data]);
 
-  // 🔹 Chart data
+  // 🔹 Chart
   const chartData = filteredData.map((item, index) => ({
     date: item.date,
     usage: index === 0 ? 0 : getUsage(filteredData, index),
   }));
 
-  // 🔹 Month navigation
+  // 🔹 Month nav
   const changeMonth = (dir) => {
     const newDate = new Date(selectedMonth);
     newDate.setMonth(newDate.getMonth() + dir);
@@ -148,140 +159,269 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-gray-50 to-gray-200 flex justify-center items-center">
-      <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-6 w-full max-w-md">
+    <div className={`${darkMode ? "dark" : ""}`}>
+      <div className="min-h-screen bg-linear-to-b from-gray-50 to-gray-200 dark:from-[#0f172a] dark:to-[#020617] flex justify-center items-center">
 
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-bold tracking-tight">
-            UrjaTrack
-          </h1>
-          <p className="text-xs text-gray-500">
-            Smart Electricity Tracker
-          </p>
-        </div>
+        <div className="bg-white/90 dark:bg-[#111827] backdrop-blur-md shadow-lg rounded-2xl p-6 w-full max-w-md">
 
-        {/* ✅ Components */}
-        <MonthSelector
-          selectedMonth={selectedMonth}
-          changeMonth={changeMonth}
-        />
+          {/* 🔘 Dark mode toggle */}
+          <div className="mb-4">
 
-        {/* Usage card */}
-        <div className="bg-white shadow-sm border border-gray-200 p-4 rounded-xl mb-4 shadow-sm">
+            {/* Top Row */}
+            <div className="flex items-center justify-between">
 
-          <div className="flex justify-between items-center">
+              {/* Left spacer (to balance layout) */}
+              <div className="w-8"></div>
 
-            {/* Latest Usage */}
-            <div className="text-center flex-1">
-              <div className="text-xs text-gray-500">Latest Usage</div>
-              <div className={`text-lg font-bold ${
-                latestUsage > 50 ? "text-red-500" : "text-green-600"
-              }`}>
-                ₹{latestUsage}
-              </div>
+              {/* Title */}
+              <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white text-center">
+                ⚡ UrjaTrack
+              </h1>
+
+              {/* Toggle Button */}
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="text-xs px-2 py-1 rounded-md 
+                bg-gray-200 dark:bg-gray-700 
+                text-gray-800 dark:text-gray-200 
+                transition"
+              >
+                {darkMode ? "☀️" : "🌙"}
+              </button>
+
             </div>
 
-            {/* Divider */}
-            <div className="h-10 w-px bg-gray-300"></div>
-
-            {/* Days Left */}
-            <div className="text-center flex-1">
-              <div className="text-xs text-gray-500">Days Left</div>
-              <div className="text-lg font-bold text-blue-600">
-                {daysLeft} days
-              </div>
-            </div>
+            {/* Subtitle */}
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
+              Smart Electricity Tracker
+            </p>
 
           </div>
 
-        </div>
-        
-        <div className="bg-white border border-green-100 p-4 rounded-xl mb-4 shadow-sm">
-          <RechargeCard rechargeSuggestions={rechargeSuggestions} />
-        </div>
-        
-        <MonthlySummaryCard
-          totalSpent={totalSpent}
-          avgUsage={avgUsage}
-          maxUsage={maxUsage}
-        />
-
-        <TrendCard trend={trend} />
-
-        {/* Input */}
-        <div className="flex gap-2 mb-4 items-center">
-          <input
-            type="number"
-            placeholder="Enter today balance"
-            value={balance}
-            onChange={(e) => setBalance(e.target.value)}
-            className="flex-1 p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
+          <MonthSelector
+            selectedMonth={selectedMonth}
+            changeMonth={changeMonth}
           />
 
-          <button
-            onClick={saveBalance}
-            className="bg-blue-600 hover:bg-blue-700 transition rounded-xl px-4 py-2 text-white"
+          {/* Usage + Days */}
+          <div className="bg-white dark:bg-[#1f2937] border border-gray-200 dark:border-gray-600/40 p-3 rounded-xl mb-4 shadow-sm">
+            <div className="flex justify-between items-center">
+
+              <div className="text-center flex-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Latest Usage
+                </div>
+                <div className={`text-base font-bold ${
+                  latestUsage > 50 ? "text-red-500" : "text-green-600"
+                }`}>
+                  ₹{latestUsage}
+                </div>
+              </div>
+
+              <div className="h-10 w-px bg-gray-300 dark:bg-gray-600"></div>
+
+              <div className="text-center flex-1">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Days Left
+                </div>
+                <div className="text-base font-bold text-blue-600">
+                  {daysLeft} days
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Recharge */}
+          <div className="bg-white dark:bg-[#1f2937] border border-gray-200 dark:border-gray-600/40 p-3 rounded-xl mb-4 shadow-sm">
+            <RechargeCard rechargeSuggestions={rechargeSuggestions} />
+          </div>
+
+          {/* Summary */}
+          <MonthlySummaryCard
+            totalSpent={totalSpent}
+            avgUsage={avgUsage}
+            maxUsage={maxUsage}
+          />
+
+          {/* Trend */}
+          <TrendCard trend={trend} />
+
+          {/* Input */}
+          <div
+            className="bg-white dark:bg-[#1f2937] 
+            border border-gray-200 dark:border-gray-600/40 
+            rounded-xl p-3 mb-4 shadow-sm"
           >
-            Save
-          </button>
-        </div>
 
-        {/* Graph */}
+            {/* Label */}
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              Enter Today Balance
+            </p>
 
-        <h3 className="font-semibold mb-2">
-          Daily Usage (per day) 📊
-        </h3>
-        <div className="bg-white p-3 rounded-xl shadow-sm mb-4">
-          <LineChart width={300} height={200} data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="date" />
-            <YAxis />
-            <Tooltip />
-            <Line type="monotone" dataKey="usage" stroke="#4f46e5" />
-          </LineChart>
-        </div>
-        
+            {/* Input + Button */}
+            <div className="flex items-center gap-2">
 
-        {/* History */}
-        <h3 className="font-semibold mt-4 mb-2">History 📅</h3>
+              <input
+                type="number"
+                placeholder="₹ Enter amount"
+                value={balance}
+                onChange={(e) => setBalance(e.target.value)}
+                className="flex-1 p-3 rounded-lg 
+                bg-gray-50 dark:bg-[#020617] 
+                border border-gray-300 dark:border-gray-600/40 
+                text-gray-900 dark:text-white text-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
 
-        <ul className="space-y-3 max-h-60 overflow-y-auto">
-          {filteredData.map((item, index) => {
-            const opening =
-              index === 0 ? null : filteredData[index - 1].balance;
+              <button
+                onClick={saveBalance}
+                className="bg-blue-600 hover:bg-blue-700 
+                active:scale-95 transition 
+                rounded-lg px-4 py-2 text-white text-sm font-medium"
+              >
+                Save
+              </button>
 
-            const usage = getUsage(filteredData, index);
-            const closing = item.balance;
+            </div>
+          </div>
 
-            return (
-              <li key={index} className="bg-white border border-gray-200 p-3 rounded-xl shadow-sm">
-                <div className="text-sm text-gray-500 mb-1">
-                  {item.date}
-                </div>
+          {/* Graph */}
+          <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">
+            Daily Usage 📊
+          </h3>
+ 
 
-                <div className="flex justify-between text-sm">
-                  <div>
-                    <div className="text-gray-400 text-xs">Opening</div>
-                    <div>{opening !== null ? `₹${opening}` : "-"}</div>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart 
+              data={chartData}
+              margin={{ top: 5, right: 10, left: -10, bottom: 5 }}
+            >
+
+              <CartesianGrid
+                strokeDasharray="3 3"
+                strokeOpacity={0.2}
+              />
+
+              <XAxis
+                dataKey="date"
+                tickFormatter={(date) => date.slice(5)}
+                tick={{ fontSize: 10 }}
+                stroke="#9ca3af"
+              />
+
+              <YAxis
+                tick={{ fontSize: 10 }}
+                stroke="#9ca3af"
+              />
+
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#111827",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "#fff",
+                  fontSize: "12px",
+                }}
+                labelStyle={{ color: "#9ca3af" }}
+              />
+
+              <Line
+                type="monotone"
+                dataKey="usage"
+                stroke="#22c55e"
+                strokeWidth={2.5}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+
+            </LineChart>
+          </ResponsiveContainer>
+
+          {/* History */}
+          <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">
+            History 📅
+          </h3>
+
+          <div className="relative">
+
+          <ul className="space-y-3 max-h-60 overflow-y-auto pr-1 scrollbar-hide">
+
+            {reversedData.map((item, index) => {
+
+              // Opening (previous day's balance)
+              const opening =
+                index === reversedData.length - 1
+                  ? null
+                  : reversedData[index + 1].balance;
+
+              // Usage = opening - closing
+              const usage =
+                opening !== null
+                  ? Number((opening - item.balance).toFixed(2))
+                  : null;
+
+              return (
+                <li
+                  key={index}
+                  className="bg-white dark:bg-[#1f2937] 
+                  border border-gray-200 dark:border-gray-600/40 
+                  p-3 rounded-xl shadow-sm 
+                  transition hover:shadow-md"
+                >
+                  {/* DATE */}
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    {item.date}
                   </div>
 
-                  <div>
-                    <div className="text-gray-400 text-xs">Usage</div>
-                    <div className="font-medium">
-                      {usage !== null ? `₹${usage}` : "-"}
+                  {/* CONTENT */}
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+
+                    {/* Opening */}
+                    <div className="text-center">
+                      <div className="text-[11px] text-gray-400">Opening</div>
+                      <div className="font-medium text-gray-800 dark:text-gray-200">
+                        {opening !== null ? `₹${opening}` : "-"}
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <div className="text-gray-400 text-xs">Closing</div>
-                    <div>₹{closing}</div>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                    {/* Usage */}
+                    <div className="text-center">
+                      <div className="text-[11px] text-gray-400">Usage</div>
+                      <div
+                        className={`font-semibold ${
+                          usage !== null && usage > 50
+                            ? "text-red-500"
+                            : "text-green-500"
+                        }`}
+                      >
+                        {usage !== null ? `₹${usage}` : "-"}
+                      </div>
+                    </div>
 
+                    {/* Closing */}
+                    <div className="text-center">
+                      <div className="text-[11px] text-gray-400">Closing</div>
+                      <div className="font-medium text-gray-800 dark:text-gray-200">
+                        ₹{item.balance}
+                      </div>
+                    </div>
+
+                  </div>
+                </li>
+              );
+            })}
+
+          </ul>
+
+          {/* Scroll indicator */}
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-gray-400 text-xs animate-bounce pointer-events-none">
+            ↓
+          </div>
+
+        </div>
+
+        </div>
       </div>
     </div>
   );

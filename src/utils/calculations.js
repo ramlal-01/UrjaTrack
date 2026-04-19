@@ -42,6 +42,7 @@ export const calculateStats = (filteredData) => {
     days: avgUsage > 0 ? Math.floor(amount / avgUsage) : 0,
   }));
   
+// 🔥 TREND FIX
   const recentUsages = usages.slice(-4);
 
   const recentAvg =
@@ -51,11 +52,17 @@ export const calculateStats = (filteredData) => {
 
   let trend = "stable";
 
-  if (recentAvg > avgUsage + 2) {
+  const diff = recentAvg - avgUsage;
+  const threshold = avgUsage * 0.1;
+
+  if (usages.length < 5) {
+    trend = "stable";
+  } else if (diff > threshold) {
     trend = "up";
-  } else if (recentAvg < avgUsage - 2) {
+  } else if (diff < -threshold) {
     trend = "down";
   }
+
 
   return {
     avgUsage,
