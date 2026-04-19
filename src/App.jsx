@@ -140,12 +140,17 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-center">
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-md">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-gray-200 flex justify-center items-center">
+      <div className="bg-white/90 backdrop-blur-md shadow-lg rounded-2xl p-6 w-full max-w-md">
 
-        <h1 className="text-2xl font-bold text-center mb-4">
-          ⚡ UrjaTrack
-        </h1>
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-bold tracking-tight">
+            UrjaTrack
+          </h1>
+          <p className="text-xs text-gray-500">
+            Smart Electricity Tracker
+          </p>
+        </div>
 
         {/* ✅ Components */}
         <MonthSelector
@@ -154,49 +159,73 @@ function App() {
         />
 
         {/* Usage card */}
-        <div className="bg-gray-100 p-3 rounded-xl text-center mb-4">
-          <div className="text-sm text-gray-500">Latest Usage</div>
-          <div className={`text-xl font-bold ${
-            latestUsage > 50 ? "text-red-500" : "text-green-600"
-          }`}>
-            ₹{latestUsage}
+        <div className="bg-white shadow-sm border border-gray-200 p-4 rounded-xl mb-4 shadow-sm">
+
+          <div className="flex justify-between items-center">
+
+            {/* Latest Usage */}
+            <div className="text-center flex-1">
+              <div className="text-xs text-gray-500">Latest Usage</div>
+              <div className={`text-lg font-bold ${
+                latestUsage > 50 ? "text-red-500" : "text-green-600"
+              }`}>
+                ₹{latestUsage}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="h-10 w-px bg-gray-300"></div>
+
+            {/* Days Left */}
+            <div className="text-center flex-1">
+              <div className="text-xs text-gray-500">Days Left</div>
+              <div className="text-lg font-bold text-blue-600">
+                {daysLeft} days
+              </div>
+            </div>
+
           </div>
+
         </div>
-
-        <DaysLeftCard daysLeft={daysLeft} />
-
-        <RechargeCard rechargeSuggestions={rechargeSuggestions} />
+        
+        <div className="bg-white border border-green-100 p-4 rounded-xl mb-4 shadow-sm">
+          <RechargeCard rechargeSuggestions={rechargeSuggestions} />
+        </div>
+        
 
         {/* Input */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 items-center">
           <input
             type="number"
             placeholder="Enter today balance"
             value={balance}
             onChange={(e) => setBalance(e.target.value)}
-            className="flex-1 p-2 border rounded-lg"
+            className="flex-1 p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
 
           <button
             onClick={saveBalance}
-            className="bg-black text-white px-4 rounded-lg"
+            className="bg-blue-600 hover:bg-blue-700 transition rounded-xl px-4 py-2 text-white"
           >
             Save
           </button>
         </div>
 
         {/* Graph */}
+
         <h3 className="font-semibold mb-2">
           Daily Usage (per day) 📊
         </h3>
-
-        <LineChart width={300} height={200} data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Line type="monotone" dataKey="usage" stroke="#4f46e5" />
-        </LineChart>
+        <div className="bg-white p-3 rounded-xl shadow-sm mb-4">
+          <LineChart width={300} height={200} data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="usage" stroke="#4f46e5" />
+          </LineChart>
+        </div>
+        
 
         {/* History */}
         <h3 className="font-semibold mt-4 mb-2">History 📅</h3>
@@ -210,7 +239,7 @@ function App() {
             const closing = item.balance;
 
             return (
-              <li key={index} className="bg-gray-50 p-3 rounded-xl shadow-sm">
+              <li key={index} className="bg-white border border-gray-200 p-3 rounded-xl shadow-sm">
                 <div className="text-sm text-gray-500 mb-1">
                   {item.date}
                 </div>
