@@ -9,9 +9,14 @@ export const calculateStats = (filteredData) => {
   const usages = filteredData
     .map((item, index) => {
       if (index === 0) return null;
-      return filteredData[index - 1].balance - item.balance;
+      const diff = filteredData[index - 1].balance - item.balance;
+
+      // ignore recharge
+      if (diff < 0) return null;
+
+      return diff;
     })
-    .filter(Boolean);
+    .filter((val) => val !== null);
 
   const avgUsage =
     usages.length > 0

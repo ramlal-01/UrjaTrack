@@ -109,13 +109,15 @@ function App() {
   };
 
   // 🔹 Filter month
-  const filteredData = data.filter((item) => {
-    const d = new Date(item.date);
-    return (
-      d.getMonth() === selectedMonth.getMonth() &&
-      d.getFullYear() === selectedMonth.getFullYear()
-    );
-  });
+const filteredData = data.filter((item) => {
+  const [year, month] = item.date.split("-").map(Number);
+
+  return (
+    year === selectedMonth.getFullYear() &&
+    month === selectedMonth.getMonth() + 1
+  );
+});
+console.log("Filtered:", filteredData.length);
 
   const reversedData = [...filteredData].reverse();
 
@@ -145,11 +147,7 @@ function App() {
     }
   }, [data]);
 
-  // 🔹 Chart
-  const chartData = filteredData.map((item, index) => ({
-    date: item.date,
-    usage: index === 0 ? 0 : getUsage(filteredData, index),
-  }));
+
 
   // 🔹 Month nav
   const changeMonth = (dir) => {
@@ -157,6 +155,34 @@ function App() {
     newDate.setMonth(newDate.getMonth() + dir);
     setSelectedMonth(newDate);
   };
+
+
+  // 🔹 Get previous day's balance from FULL data (not filtered)
+  const getPreviousBalance = (currentDate) => {
+    const index = data.findIndex((d) => d.date === currentDate);
+
+    if (index <= 0) return null;
+
+    return data[index - 1].balance;
+  };
+
+
+    // 🔹 Chart
+    const chartData = filteredData.map((item) => {
+      const opening = getPreviousBalance(item.date);
+
+      let usage = null;
+
+      if (opening !== null && item.balance <= opening) {
+        usage = Number((opening - item.balance).toFixed(2));
+      }
+
+      return {
+        date: item.date,
+        usage: usage,
+        recharge: opening !== null && item.balance > opening,
+      };
+    });
 
   return (
     <div className={`${darkMode ? "dark" : ""}`}>
@@ -196,6 +222,41 @@ function App() {
               Smart Electricity Tracker
             </p>
 
+          </div>
+
+          <div className="
+            relative overflow-hidden
+            rounded-2xl mb-4 p-5
+            bg-white/80 dark:bg-[#111827]/80
+            backdrop-blur-md
+            border border-green-400/20 dark:border-green-500/20
+            shadow-md
+          ">
+
+            {/* subtle glow effect */}
+            <div className="absolute inset-0 
+              bg-gradient-to-br 
+              from-green-400/10 via-transparent to-transparent 
+              pointer-events-none" />
+
+            {/* content */}
+            <div className="relative text-center">
+
+              <p className="text-xs tracking-wide 
+                text-gray-500 dark:text-gray-400">
+                Current Balance
+              </p>
+
+              <p className="text-3xl font-semibold mt-1 
+                text-green-600 dark:text-green-400">
+                ₹{data.length > 0 ? data[data.length - 1].balance : 0}
+              </p>
+
+              {/* subtle divider */}
+              <div className="w-10 h-[2px] mx-auto mt-2 
+                bg-green-400/40 rounded-full" />
+
+            </div>
           </div>
 
           <MonthSelector
@@ -299,8 +360,8 @@ function App() {
             >
 
               <CartesianGrid
-                strokeDasharray="3 3"
-                strokeOpacity={0.2}
+                strokeDasharray="4 4"
+                strokeOpacity={0.15}
               />
 
               <XAxis
@@ -330,10 +391,11 @@ function App() {
                 type="monotone"
                 dataKey="usage"
                 stroke="#22c55e"
-                strokeWidth={2.5}
-                dot={{ r: 3 }}
+                strokeWidth={3}
+                dot={{ r: 3, fill: "#22c55e" }}
                 activeDot={{ r: 5 }}
-              />
+                connectNulls
+              />   
 
             </LineChart>
           </ResponsiveContainer>
@@ -350,16 +412,18 @@ function App() {
             {reversedData.map((item, index) => {
 
               // Opening (previous day's balance)
-              const opening =
-                index === reversedData.length - 1
-                  ? null
-                  : reversedData[index + 1].balance;
+              const opening = getPreviousBalance(item.date);
 
-              // Usage = opening - closing
-              const usage =
-                opening !== null
-                  ? Number((opening - item.balance).toFixed(2))
-                  : null;
+              let usage = null;
+              let isRecharge = false;
+
+              if (opening !== null) {
+                if (item.balance > opening) {
+                  isRecharge = true; // recharge detected
+                } else {
+                  usage = Number((opening - item.balance).toFixed(2));
+                }
+              }
 
               return (
                 <li
@@ -390,12 +454,23 @@ function App() {
                       <div className="text-[11px] text-gray-400">Usage</div>
                       <div
                         className={`font-semibold ${
-                          usage !== null && usage > 50
+                          isRecharge
+                            ? "text-blue-500"
+                            : usage !== null && usage > 50
                             ? "text-red-500"
                             : "text-green-500"
                         }`}
                       >
-                        {usage !== null ? `₹${usage}` : "-"}
+                        {isRecharge ? (
+                          <span className="text-blue-500 font-semibold">
+                            +₹{item.balance - opening}
+                          </span>
+                        ) : (
+                          <span>
+                            {usage !== null ? `₹${usage}` : "-"}
+                          </span>
+                        )}
+
                       </div>
                     </div>
 
@@ -415,7 +490,7 @@ function App() {
           </ul>
 
           {/* Scroll indicator */}
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-gray-400 text-xs animate-bounce pointer-events-none">
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-gray-400 text-4xl animate-bounce pointer-events-none">
             ↓
           </div>
 
